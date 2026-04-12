@@ -1,0 +1,36 @@
+volumes:
+  pgdata:
+  imagesvolume:
+
+
+services:
+ db:
+  image: postgres
+  restart: always
+  volumes:
+    - pgdata:/var/lib/postgresql
+  ports:
+   - "5434:5432"
+  environment:
+    POSTGRES_PASSWORD: PASSWORD
+  networks:
+      - my-network
+
+ api:
+  build:
+   context: ./API
+   dockerfile: Dockerfile
+  depends_on:
+   - db
+  ports:
+   - "3000:8080"
+  environment:
+    - DBHOST=db
+    - ASPNETCORE_ENVIRONMENT=Development
+  networks:
+      - my-network
+  volumes:
+      - imagesvolume:/app/wwwroot/images
+
+networks:
+  my-network:
