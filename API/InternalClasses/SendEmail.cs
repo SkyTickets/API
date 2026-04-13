@@ -20,11 +20,12 @@ namespace API.InternalClasses
                 IsBodyHtml = true
             };
 
-            SmtpClient smtp = new("smtp.gmail.com", 587)
+            SmtpClient smtp = new("smtp.gmail.com", 465)
             {
-                Credentials = new NetworkCredential(_email, _appPassword),
-                UseDefaultCredentials = false,
-                EnableSsl = true
+                Credentials = new NetworkCredential(_email, _appPassword.Replace(" ", "")),
+                EnableSsl = true,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false
             };
 
             await smtp.SendMailAsync(mailMessage);
@@ -48,18 +49,19 @@ namespace API.InternalClasses
                 IsBodyHtml = true
             };
 
-            SmtpClient smtp = new("smtp.gmail.com", 587)
+            SmtpClient smtp = new("smtp.gmail.com", 465)
             {
-                Credentials = new NetworkCredential(_email, _appPassword),
-                UseDefaultCredentials = false,
-                EnableSsl = true
+                Credentials = new NetworkCredential(_email, _appPassword.Replace(" ", "")),
+                EnableSsl = true,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false
             };
 
             await smtp.SendMailAsync(mailMessage);
         }
 
         private const string _email = "ksebija@gmail.com";
-        private const string _appPassword = "brsq xdqx jzce jsqm";
+        private const string _appPassword = "kbzh tsba llgi pmml";
 
     }
 }
