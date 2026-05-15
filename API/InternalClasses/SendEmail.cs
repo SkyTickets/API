@@ -20,7 +20,7 @@ namespace API.InternalClasses
                 IsBodyHtml = true
             };
 
-            SmtpClient smtp = new("smtp.gmail.com", 465)
+            SmtpClient smtp = new("smtp.yandex.com", 587)
             {
                 Credentials = new NetworkCredential(_email, _appPassword.Replace(" ", "")),
                 EnableSsl = true,
@@ -49,7 +49,7 @@ namespace API.InternalClasses
                 IsBodyHtml = true
             };
 
-            SmtpClient smtp = new("smtp.gmail.com", 465)
+            SmtpClient smtp = new("smtp.yandex.com", 587)
             {
                 Credentials = new NetworkCredential(_email, _appPassword.Replace(" ", "")),
                 EnableSsl = true,
@@ -60,8 +60,8 @@ namespace API.InternalClasses
             await smtp.SendMailAsync(mailMessage);
         }
 
-        private const string _email = "ksebija@gmail.com";
-        private const string _appPassword = "kbzh tsba llgi pmml";
+        private const string _email = "artembruh321@yandex.ru";
+        private const string _appPassword = "rrmrdyhgytvaxtez";
 
     }
 }
