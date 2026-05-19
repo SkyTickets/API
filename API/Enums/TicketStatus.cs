@@ -1,8 +1,8 @@
 ﻿namespace API.Enums
 {
-    public enum TicketStatus
-    {
-        Куплен,
-        Отменен
-    }
+public enum TicketStatus
+{
+Куплен,
+Отменен
+}
 }

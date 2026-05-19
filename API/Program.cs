@@ -19,34 +19,34 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContextFactory<PostgresContext>((options) =>
 {
-    options.UseLazyLoadingProxies().UseNpgsql(conString, o =>
-         o.MapEnum<Role>("role", "skytickets", new NpgsqlNullNameTranslator())
-        .MapEnum<TicketStatus>("ticket_status", "skytickets", new NpgsqlNullNameTranslator())
-        .MapEnum<ClassOfService>("class_of_service", "skytickets", new NpgsqlNullNameTranslator())
-       );
+options.UseLazyLoadingProxies().UseNpgsql(conString, o =>
+ o.MapEnum<Role>("role", "skytickets", new NpgsqlNullNameTranslator())
+.MapEnum<TicketStatus>("ticket_status", "skytickets", new NpgsqlNullNameTranslator())
+.MapEnum<ClassOfService>("class_of_service", "skytickets", new NpgsqlNullNameTranslator())
+   );
 });
 
 var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(myAllowSpecificOrigins,
-                          policy =>
-                          {
-                              policy.WithOrigins(clientAddress)
-                                                  .AllowAnyHeader()
-                                                  .AllowAnyMethod()
-                                                  .AllowAnyOrigin();
-                          });
+options.AddPolicy(myAllowSpecificOrigins,
+  policy =>
+  {
+  policy.WithOrigins(clientAddress)
+  .AllowAnyHeader()
+  .AllowAnyMethod()
+  .AllowAnyOrigin();
+  });
 });
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.MapOpenApi();
+app.UseSwagger();
+app.UseSwaggerUI();
 }
 
 app.UseStaticFiles();
