@@ -2,7 +2,7 @@
 
 public static class Transliteration
 {
-private static readonly Dictionary<char, string> Map = new()
+    private static readonly Dictionary<char, string> Map = new()
 {
 {'а', "A"}, {'б', "B"}, {'в', "V"}, {'г', "G"}, {'д', "D"},
 {'е', "E"}, {'ё', "YO"}, {'ж', "ZH"}, {'з', "Z"}, {'и', "I"},
@@ -20,19 +20,19 @@ private static readonly Dictionary<char, string> Map = new()
 {'Э', "E"}, {'Ю', "YU"}, {'Я', "YA"},
 };
 
-public static string ToLatin(string cyrillic)
-{
-if (string.IsNullOrWhiteSpace(cyrillic)) return cyrillic;
-var result = new System.Text.StringBuilder();
-foreach (char c in cyrillic)
-{
-if (Map.TryGetValue(c, out var latin))
-result.Append(latin);
-else if (c == ' ')
-result.Append(' ');
-else
-result.Append(c);
-}
-return result.ToString();
-}
+    public static string ToLatin(string cyrillic)
+    {
+        if (string.IsNullOrWhiteSpace(cyrillic)) return cyrillic;
+        var result = new System.Text.StringBuilder();
+        foreach (char c in cyrillic)
+        {
+            if (Map.TryGetValue(c, out var latin))
+                result.Append(latin);
+            else if (c == ' ')
+                result.Append(' ');
+            else
+                result.Append(c);
+        }
+        return result.ToString();
+    }
 }

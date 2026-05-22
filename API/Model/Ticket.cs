@@ -1,58 +1,61 @@
 ﻿using API.Enums;
 using API.ExportClasses;
 using API.InternalClasses;
+using System;
+using System.Collections.Generic;
+using System.Formats.Asn1;
 
 namespace API.Model;
 
 public partial class Ticket
 {
-public int TId { get; set; }
+    public int TId { get; set; }
 
-public int TFlight { get; set; }
+    public int TBooking { get; set; }
 
-public int TUser { get; set; }
+    public int TPassenger { get; set; }
+    public ClassOfService TClass { get; set; }
 
-public DateTime TBoughtDate { get; set; }
+    public int TPrice { get; set; }
 
-public ClassOfService TClass { get; set; }
+    public virtual Booking TBookingNavigation { get; set; } = null!;
 
-public int TTotalPrice { get; set; }
+    public virtual Passenger TPassengerNavigation { get; set; } = null!;
 
-public TicketStatus TStatus { get; set; }
+    public virtual ICollection<AdditionalService> TsServices { get; set; } = new List<AdditionalService>();
 
-public virtual Flight TFlightNavigation { get; set; } = null!;
+    public ExportTicket ToExport()
+    {
+        var passenger = TPassengerNavigation;
+        var fullName = passenger is not null
+            ? $"{passenger.PSurname} {passenger.PName} {passenger.PPatronymic}".Trim()
+            : "";
+        var latinName = Transliteration.ToLatin(fullName);
 
-public virtual User TUserNavigation { get; set; } = null!;
+        var flight = TBookingNavigation?.BFlightNavigation;
 
-public ExportTicket ToExport()
-{
-var fullName = $"{TUserNavigation.USurname} {TUserNavigation.UName} {TUserNavigation.UPatronymic}";
-var latinName = Transliteration.ToLatin(fullName);
+        string[] files = [];
+        if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/airline/")))
+        {
+            files = Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/airline/"));
+        }
+        string file = files.FirstOrDefault(x => Path.GetFileNameWithoutExtension(x) == flight?.FAirline.ToString()) ?? "";
 
-// Airline image
-string[] files = [];
-if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/airline/")))
-{
-files = Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/airline/"));
-}
-string file = files.FirstOrDefault(x => Path.GetFileNameWithoutExtension(x) == TFlightNavigation.FAirline.ToString()) ?? "";
-
-return new()
-{
-TId = TId,
-TFlight = TFlight,
-TUser = fullName,
-TUserLatin = latinName,
-TBoughtDate = TBoughtDate,
-TClass = Convertation.ConvertEnumToString(TClass),
-TTotalPrice = TTotalPrice,
-TStatus = Convertation.ConvertEnumToString(TStatus),
-FAirline = TFlightNavigation.FAirlineNavigation?.AlName,
-FDepartureAirport = TFlightNavigation.FDepartureAirportNavigation?.ApName,
-FArrivalAirport = TFlightNavigation.FArrivalAirportNavigation?.ApName,
-FDepartureTime = TFlightNavigation.FDepartureTime,
-FArrivalTime = TFlightNavigation.FArrivalTime,
-AirlineImage = "/airline/" + Path.GetFileName(file),
-};
-}
+        return new()
+        {
+            TId = TId,
+            TBooking = TBooking,
+            TPassenger = fullName,
+            TPassengerLatin = latinName,
+            TClass = Convertation.ConvertEnumToString(TClass),
+            TPrice = TPrice,
+            Services = TsServices.Select(s => s.ToExport()).ToList(),
+            FAirline = flight?.FAirlineNavigation?.AlName,
+            FDepartureAirport = flight?.FDepartureAirportNavigation?.ApName,
+            FArrivalAirport = flight?.FArrivalAirportNavigation?.ApName,
+            FDepartureTime = flight?.FDepartureTime,
+            FArrivalTime = flight?.FArrivalTime,
+            AirlineImage = "/airline/" + Path.GetFileName(file),
+        };
+    }
 }

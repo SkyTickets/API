@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using API.ExportClasses;
 
-namespace API.Model1;
+namespace API.Model;
 
 public partial class Airport
 {
@@ -20,4 +19,17 @@ public partial class Airport
     public virtual ICollection<Flight> FlightFArrivalAirportNavigations { get; set; } = new List<Flight>();
 
     public virtual ICollection<Flight> FlightFDepartureAirportNavigations { get; set; } = new List<Flight>();
+
+    public ExportAirport ToExport()
+    {
+        return new()
+        {
+            ApId = ApId,
+            ApName = ApName,
+            ApCountry = ApCountry,
+            ApCity = ApCity,
+            ApStreet = ApStreet,
+            ApBuilding = ApBuilding,
+        };
+    }
 }

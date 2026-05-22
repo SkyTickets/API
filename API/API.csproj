@@ -9,10 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-<Compile Remove="Model1\**" />
-<Content Remove="Model1\**" />
-<EmbeddedResource Remove="Model1\**" />
-<None Remove="Model1\**" />
+    <Compile Remove="Model___\**" />
+    <Compile Remove="output\**" />
+    <Content Remove="Model___\**" />
+    <Content Remove="output\**" />
+    <EmbeddedResource Remove="Model___\**" />
+    <EmbeddedResource Remove="output\**" />
+    <None Remove="Model___\**" />
+    <None Remove="output\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,5 +31,9 @@
 <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
 <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
 <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 </Project>

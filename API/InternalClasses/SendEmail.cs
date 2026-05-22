@@ -35,25 +35,31 @@ namespace API.InternalClasses
         {
             // Загружаем билет со всеми связями сразу через Include, чтобы избежать кучи ручных запросов к контексту
             Ticket? ticket = await context.Tickets
-                .Include(t => t.TUserNavigation)
-                .Include(t => t.TFlightNavigation)
-                    .ThenInclude(f => f.FAirlineNavigation)
-                .Include(t => t.TFlightNavigation)
-                    .ThenInclude(f => f.FDepartureAirportNavigation)
-                .Include(t => t.TFlightNavigation)
-                    .ThenInclude(f => f.FArrivalAirportNavigation)
+                .Include(t => t.TPassenger)
+                .Include(t => t.TBookingNavigation)
+                    .ThenInclude(b => b.BFlightNavigation)
+                        .ThenInclude(f => f.FAirlineNavigation)
+                .Include(t => t.TBookingNavigation)
+                    .ThenInclude(b => b.BUserNavigation)
+                .Include(t => t.TBookingNavigation)
+                    .ThenInclude(b => b.BFlightNavigation)
+                        .ThenInclude(f => f.FDepartureAirportNavigation)
+                .Include(t => t.TBookingNavigation)
+                    .ThenInclude(b => b.BFlightNavigation)
+                        .ThenInclude(f => f.FArrivalAirportNavigation)
                 .FirstOrDefaultAsync(t => t.TId == ticketid);
 
             if (ticket is null) return;
 
-            var flight = ticket.TFlightNavigation;
-            var user = ticket.TUserNavigation;
+            var user = ticket.TBookingNavigation.BUserNavigation;
+            var flight = ticket.TBookingNavigation.BFlightNavigation;
+            var passenger = ticket.TPassengerNavigation;
             var airline = flight.FAirlineNavigation;
             var departureAirport = flight.FDepartureAirportNavigation;
             var arrivalAirport = flight.FArrivalAirportNavigation;
 
             // Данные для заполнения шаблона
-            string fullName = $"{user.USurname} {user.UName} {user.UPatronymic}";
+            string fullName = $"{passenger.PSurname} {passenger.PName} {passenger.PPatronymic}";
             string latinName = Transliteration.ToLatin(fullName);
             string stringClass = Convertation.ConvertEnumToString(ticket.TClass);
 
@@ -166,12 +172,12 @@ namespace API.InternalClasses
                   
                   <td valign=""top"" style=""border-right: 1px solid #f0f0f0; padding-left: 15px; padding-right: 10px;"">
                     <div style=""font-size: 10px; font-weight: 700; color: #999999; letter-spacing: 0.5px; margin-bottom: 6px;"">ДАТА ПОКУПКИ</div>
-                    <div style=""font-size: 14px; font-weight: 600; color: #1a1a1a;"">{ticket.TBoughtDate:d MMM yyyy}</div>
+                    <div style=""font-size: 14px; font-weight: 600; color: #1a1a1a;"">{ticket.TBookingNavigation.BCreatedAt:d MMM yyyy}</div>
                   </td>
                   
                   <td valign=""top"" align=""right"" style=""padding-left: 15px;"">
                     <div style=""font-size: 10px; font-weight: 700; color: #999999; letter-spacing: 0.5px; margin-bottom: 6px;"">СТОИМОСТЬ</div>
-                    <div style=""font-size: 18px; font-weight: 700; color: #1565C0;"">{ticket.TTotalPrice:N0} ₽</div>
+                    <div style=""font-size: 18px; font-weight: 700; color: #1565C0;"">{ticket.TPrice:N0} ₽</div>
                   </td>
                 </tr>
               </table>

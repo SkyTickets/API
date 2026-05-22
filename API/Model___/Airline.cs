@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using API.ExportClasses;
 
-namespace API.Model1;
+namespace API.Model;
 
 public partial class Airline
 {
@@ -12,4 +11,14 @@ public partial class Airline
     public string AlEmail { get; set; } = null!;
 
     public virtual ICollection<Flight> Flights { get; set; } = new List<Flight>();
+
+    public ExportAirline ToExport()
+    {
+        return new()
+        {
+            AlId = AlId,
+            AlName = AlName,
+            AlEmail = AlEmail,
+        };
+    }
 }
