@@ -14,6 +14,7 @@ public partial class Ticket
     public int TBooking { get; set; }
 
     public int TPassenger { get; set; }
+
     public ClassOfService TClass { get; set; }
 
     public int TPrice { get; set; }

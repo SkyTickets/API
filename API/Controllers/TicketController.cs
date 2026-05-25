@@ -62,7 +62,6 @@ namespace API.Controllers
             return Ok(tickets.Select(t => t.ToExport()).ToList());
         }
 
-        /// <summary>Добавить дополнительную услугу к билету</summary>
         [HttpPost("AddService")]
         public async Task<IActionResult> AddService([FromBody] TicketServiceRequest request)
         {
@@ -89,7 +88,6 @@ namespace API.Controllers
             return Ok();
         }
 
-        /// <summary>Удалить дополнительную услугу с билета</summary>
         [HttpPost("RemoveService")]
         public async Task<IActionResult> RemoveService([FromBody] TicketServiceRequest request)
         {

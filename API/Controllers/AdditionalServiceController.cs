@@ -40,13 +40,8 @@ namespace API.Controllers
             if (await _context.AdditionalServices.AsNoTracking().AnyAsync(s => s.AsName == service.AsName))
                 return BadRequest("Услуга с таким названием уже существует");
 
-            int id = await _context.AdditionalServices.AsNoTracking().AnyAsync()
-                ? await _context.AdditionalServices.AsNoTracking().MaxAsync(s => s.AsId) + 1
-                : 1;
-
             AdditionalService newService = new()
             {
-                AsId = id,
                 AsName = service.AsName,
                 AsPrice = service.AsPrice,
             };

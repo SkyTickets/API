@@ -40,13 +40,8 @@ namespace API.Controllers
             if (await _context.Airplanes.AsNoTracking().AnyAsync(x => x.PlModel == airplane.PlModel))
                 return BadRequest("Самолёт с такой моделью уже существует");
 
-            int id = await _context.Airplanes.AsNoTracking().AnyAsync()
-                ? await _context.Airplanes.AsNoTracking().MaxAsync(x => x.PlId) + 1
-                : 1;
-
             Airplane newAirplane = new()
             {
-                PlId = id,
                 PlModel = airplane.PlModel,
                 PlEconomySeats = airplane.PlEconomySeats,
                 PlComfortSeats = airplane.PlComfortSeats,

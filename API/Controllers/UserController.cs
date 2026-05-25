@@ -79,16 +79,11 @@ namespace API.Controllers
             if (await _context.Users.AsNoTracking().AnyAsync(x => x.UPhone == user.UPhone))
                 return BadRequest("Указанный номер телефона занят");
 
-            int id = await _context.Users.AsNoTracking().AnyAsync()
-                ? await _context.Users.AsNoTracking().MaxAsync(x => x.UId) + 1
-                : 1;
-
             PasswordHasher<ExportUser> hasher = new();
             string encPassword = hasher.HashPassword(user, user.UPassword);
 
             User newUser = new()
             {
-                UId = id,
                 UName = user.UName,
                 USurname = user.USurname,
                 UPatronymic = user.UPatronymic,

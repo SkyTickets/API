@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 
+
 namespace API.Model;
 
 public partial class PostgresContext(DbContextOptions<PostgresContext> options) : DbContext(options)
@@ -39,7 +40,7 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.ToTable("additional_services", "skytickets");
 
             entity.Property(e => e.AsId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("as_id");
             entity.Property(e => e.AsName)
                 .HasMaxLength(100)
@@ -54,7 +55,7 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.ToTable("airlines", "skytickets");
 
             entity.Property(e => e.AlId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("al_id");
             entity.Property(e => e.AlEmail).HasColumnName("al_email");
             entity.Property(e => e.AlName)
@@ -69,7 +70,7 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.ToTable("airplanes", "skytickets");
 
             entity.Property(e => e.PlId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("pl_id");
             entity.Property(e => e.PlBusinessSeats)
                 .HasDefaultValue(0)
@@ -95,7 +96,7 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.ToTable("airports", "skytickets");
 
             entity.Property(e => e.ApId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("ap_id");
             entity.Property(e => e.ApBuilding)
                 .HasMaxLength(10)
@@ -121,13 +122,14 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.ToTable("bookings", "skytickets");
 
             entity.Property(e => e.BId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("b_id");
             entity.Property(e => e.BCreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("b_created_at");
             entity.Property(e => e.BFlight).HasColumnName("b_flight");
+            entity.Property(e => e.BStatus).HasColumnName("b_status");
             entity.Property(e => e.BTotalPrice).HasColumnName("b_total_price");
             entity.Property(e => e.BUser).HasColumnName("b_user");
 
@@ -147,7 +149,7 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.ToTable("flights", "skytickets");
 
             entity.Property(e => e.FId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("f_id");
             entity.Property(e => e.FAirline).HasColumnName("f_airline");
             entity.Property(e => e.FAirplane).HasColumnName("f_airplane");
@@ -188,7 +190,7 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.HasIndex(e => new { e.PPassportSerial, e.PPassportNumber }, "passengers_unique_passport").IsUnique();
 
             entity.Property(e => e.PId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("p_id");
             entity.Property(e => e.PBirthdate).HasColumnName("p_birthdate");
             entity.Property(e => e.PName)
@@ -215,9 +217,10 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.ToTable("tickets", "skytickets");
 
             entity.Property(e => e.TId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("t_id");
             entity.Property(e => e.TBooking).HasColumnName("t_booking");
+            entity.Property(e => e.TClass).HasColumnName("t_class");
             entity.Property(e => e.TPassenger).HasColumnName("t_passenger");
             entity.Property(e => e.TPrice).HasColumnName("t_price");
 
@@ -259,7 +262,7 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.HasIndex(e => e.UPhone, "users_unique_phone").IsUnique();
 
             entity.Property(e => e.UId)
-                .ValueGeneratedNever()
+                .ValueGeneratedOnAdd()
                 .HasColumnName("u_id");
             entity.Property(e => e.UBirthdate).HasColumnName("u_birthdate");
             entity.Property(e => e.UEmail).HasColumnName("u_email");
@@ -273,6 +276,7 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
             entity.Property(e => e.UPhone)
                 .HasMaxLength(20)
                 .HasColumnName("u_phone");
+            entity.Property(e => e.URole).HasColumnName("u_role");
             entity.Property(e => e.USurname)
                 .HasMaxLength(45)
                 .HasColumnName("u_surname");

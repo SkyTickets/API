@@ -34,6 +34,22 @@ namespace API.Controllers
             return Ok(passenger.ToExport());
         }
 
+        [HttpGet("FindByPassport")]
+        public async Task<IActionResult> FindByPassport(string serial, string number)
+        {
+            // Ищем в БД
+            var passenger = await _context.Passengers
+                .FirstOrDefaultAsync(p => p.PPassportSerial == serial && p.PPassportNumber == number);
+
+            // Если не нашли, возвращаем 404, чтобы фронтенд понял, что нужно создавать нового
+            if (passenger == null)
+            {
+                return NotFound("Пассажир не найден");
+            }
+
+            return Ok(passenger.ToExport());
+        }
+
         [HttpPost("AddPassenger")]
         public async Task<IActionResult> AddPassenger([FromBody] ExportPassenger passenger)
         {
@@ -43,14 +59,9 @@ namespace API.Controllers
             {
                 return BadRequest("Пассажир с таким паспортом уже существует");
             }
-
-            int id = await _context.Passengers.AsNoTracking().AnyAsync()
-                ? await _context.Passengers.AsNoTracking().MaxAsync(x => x.PId) + 1
-                : 1;
-
+                        
             Passenger newPassenger = new()
             {
-                PId = id,
                 PSurname = passenger.PSurname,
                 PName = passenger.PName,
                 PPatronymic = passenger.PPatronymic,

@@ -21,7 +21,7 @@ builder.Services.AddDbContextFactory<PostgresContext>((options) =>
 {
 options.UseLazyLoadingProxies().UseNpgsql(conString, o =>
  o.MapEnum<Role>("role", "skytickets", new NpgsqlNullNameTranslator())
-.MapEnum<BookingStatus>("ticket_status", "skytickets", new NpgsqlNullNameTranslator())
+.MapEnum<BookingStatus>("booking_status", "skytickets", new NpgsqlNullNameTranslator())
 .MapEnum<ClassOfService>("class_of_service", "skytickets", new NpgsqlNullNameTranslator())
    );
 });

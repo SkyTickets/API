@@ -10,9 +10,11 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class BookingController(PostgresContext context) : ControllerBase
+    public class BookingController(PostgresContext context, IDbContextFactory<PostgresContext> contextFactory) : ControllerBase
     {
         private readonly PostgresContext _context = context;
+        private readonly IDbContextFactory<PostgresContext> _contextFactory = contextFactory;
+
 
         private IQueryable<Booking> BookingsWithIncludes() =>
             _context.Bookings
@@ -64,18 +66,12 @@ namespace API.Controllers
             return Ok(booking.ToExport());
         }
 
-        /// <summary>
-        /// Создать бронирование с билетами и услугами за один запрос.
-        /// Body: { BUser, BFlight, BStatus, BTotalPrice,
-        ///         Tickets: [{ TPassengerId, TClass, TPrice, ServiceIds: [1,2] }] }
-        /// </summary>
         [HttpPost("AddBooking")]
         public async Task<IActionResult> AddBooking([FromBody] CreateBookingRequest request)
         {
             if (request.Tickets is null || request.Tickets.Count == 0)
                 return BadRequest("Необходимо указать хотя бы один билет");
 
-            // Загружаем рейс с самолётом и активными бронями для проверки мест
             Flight? flight = await _context.Flights
                 .AsNoTracking()
                 .Include(f => f.FAirplaneNavigation)
@@ -89,7 +85,6 @@ namespace API.Controllers
             if (!await _context.Users.AsNoTracking().AnyAsync(u => u.UId == request.BUser))
                 return BadRequest("Указанный пользователь не найден");
 
-            // Проверяем наличие мест по классам
             foreach (var ticketReq in request.Tickets)
             {
                 var cls = (ClassOfService)Convertation.ConvertStringToEnum<ClassOfService>(ticketReq.TClass)!;
@@ -105,38 +100,28 @@ namespace API.Controllers
                     return BadRequest($"Нет свободных мест класса «{ticketReq.TClass}»");
             }
 
-            // Проверяем пассажиров
             foreach (var ticketReq in request.Tickets)
             {
                 if (!await _context.Passengers.AsNoTracking().AnyAsync(p => p.PId == ticketReq.TPassengerId))
                     return BadRequest($"Пассажир с id {ticketReq.TPassengerId} не найден");
             }
 
-            int bookingId = await _context.Bookings.AsNoTracking().AnyAsync()
-                ? await _context.Bookings.AsNoTracking().MaxAsync(b => b.BId) + 1 : 1;
-
-            int nextTicketId = await _context.Tickets.AsNoTracking().AnyAsync()
-                ? await _context.Tickets.AsNoTracking().MaxAsync(t => t.TId) + 1 : 1;
-
             var status = (BookingStatus)Convertation.ConvertStringToEnum<BookingStatus>(request.BStatus ?? "Забронирован")!;
 
             Booking newBooking = new()
             {
-                BId = bookingId,
                 BUser = request.BUser,
                 BFlight = request.BFlight,
-                BCreatedAt = DateTime.UtcNow,
+                BCreatedAt = DateTime.Now,
                 BStatus = status,
                 BTotalPrice = request.BTotalPrice,
             };
 
             _context.Bookings.Add(newBooking);
 
-            // Добавляем билеты без услуг — сохраняем, чтобы получить их ID в БД
             var ticketsToCreate = request.Tickets.Select(ticketReq => new Ticket
             {
-                TId = nextTicketId++,
-                TBooking = bookingId,
+                TBookingNavigation = newBooking,
                 TPassenger = ticketReq.TPassengerId,
                 TClass = (ClassOfService)Convertation.ConvertStringToEnum<ClassOfService>(ticketReq.TClass)!,
                 TPrice = ticketReq.TPrice,
@@ -145,13 +130,11 @@ namespace API.Controllers
             _context.Tickets.AddRange(ticketsToCreate);
             await _context.SaveChangesAsync();
 
-            // Теперь привязываем услуги через навигационное свойство many-to-many
             for (int i = 0; i < ticketsToCreate.Count; i++)
             {
                 var serviceIds = request.Tickets[i].ServiceIds;
                 if (serviceIds is null || serviceIds.Count == 0) continue;
 
-                // Загружаем сохранённый билет с трекингом
                 Ticket? savedTicket = await _context.Tickets
                     .Include(t => t.TsServices)
                     .FirstOrDefaultAsync(t => t.TId == ticketsToCreate[i].TId);
@@ -170,7 +153,7 @@ namespace API.Controllers
 
             await _context.SaveChangesAsync();
 
-            Booking? saved = await BookingsWithIncludes().FirstOrDefaultAsync(b => b.BId == bookingId);
+            Booking? saved = await BookingsWithIncludes().FirstOrDefaultAsync(b => b.BId == newBooking.BId);
             return Ok(saved?.ToExport());
         }
 
@@ -189,6 +172,50 @@ namespace API.Controllers
             await _context.SaveChangesAsync();
 
             Booking? saved = await BookingsWithIncludes().FirstOrDefaultAsync(b => b.BId == gotten.BId);
+            return Ok(saved?.ToExport());
+        }
+
+        [HttpPost("PayBooking")]
+        public async Task<IActionResult> PayBooking([FromBody] PayBookingRequest request)
+        {
+            Booking? booking = await _context.Bookings
+                .Include(b => b.Tickets).ThenInclude(t => t.TsServices)
+                .Include(b => b.Tickets).ThenInclude(t => t.TPassengerNavigation)
+                .Include(b => b.BFlightNavigation).ThenInclude(f => f.FAirlineNavigation)
+                .Include(b => b.BFlightNavigation).ThenInclude(f => f.FDepartureAirportNavigation)
+                .Include(b => b.BFlightNavigation).ThenInclude(f => f.FArrivalAirportNavigation)
+                .Include(b => b.BUserNavigation)
+                .FirstOrDefaultAsync(b => b.BId == request.BId);
+
+            if (booking is null) return NotFound("Бронирование не найдено");
+            if (booking.BStatus == BookingStatus.Оплачен) return BadRequest("Бронирование уже оплачено");
+            if (booking.BStatus == BookingStatus.Отменен) return BadRequest("Нельзя оплатить отменённое бронирование");
+
+            // Привязываем услуги к билетам
+            if (request.Services is not null)
+            {
+                foreach (var svcReq in request.Services)
+                {
+                    var ticket = booking.Tickets.FirstOrDefault(t => t.TId == svcReq.TicketId);
+                    if (ticket is null) continue;
+                    foreach (int serviceId in svcReq.ServiceIds ?? [])
+                    {
+                        if (ticket.TsServices.Any(s => s.AsId == serviceId)) continue;
+                        AdditionalService? svc = await _context.AdditionalServices.FirstOrDefaultAsync(s => s.AsId == serviceId);
+                        if (svc is not null) ticket.TsServices.Add(svc);
+                    }
+                }
+            }
+
+            booking.BTotalPrice = booking.Tickets.Sum(t => t.TPrice + t.TsServices.Sum(s => s.AsPrice));
+            booking.BStatus = BookingStatus.Оплачен;
+
+            _context.Bookings.Update(booking);
+            await _context.SaveChangesAsync();
+
+            await Task.WhenAll(booking.Tickets.Select(t => SendEmail.SendTicketAsync(_contextFactory, t.TId)));
+
+            Booking? saved = await BookingsWithIncludes().FirstOrDefaultAsync(b => b.BId == booking.BId);
             return Ok(saved?.ToExport());
         }
 
@@ -222,6 +249,18 @@ namespace API.Controllers
         public int TPassengerId { get; set; }
         public string TClass { get; set; } = null!;
         public int TPrice { get; set; }
+        public List<int>? ServiceIds { get; set; }
+    }
+
+    public class PayBookingRequest
+    {
+        public int BId { get; set; }
+        public List<TicketServicesRequest>? Services { get; set; }
+    }
+
+    public class TicketServicesRequest
+    {
+        public int TicketId { get; set; }
         public List<int>? ServiceIds { get; set; }
     }
 }

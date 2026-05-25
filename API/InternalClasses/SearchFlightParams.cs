@@ -1,4 +1,6 @@
-﻿namespace API.InternalClasses
+﻿using API.Enums;
+
+namespace API.InternalClasses
 {
     public class SearchFlightParams
     {
@@ -15,5 +17,13 @@
         public int MaxCost { get; set; } = -1;
 
         public string? Airline { get; set; }
+
+        public int Passengers { get; set; } = 1;
+
+        public string? ClassOfServiceStr { get; set; }
+
+        public int Page { get; set; } = 1;
+
+        public int PageSize { get; set; } = 50;
     }
 }
