@@ -52,7 +52,6 @@ namespace API.Controllers
                 .Where(f => f.FDepartureTime >= DateTime.Now)
                 .ToListAsync();
 
-            // Оставляем только рейсы, у которых есть хотя бы одно свободное место
             flights = flights.Where(f =>
             {
                 var ap = f.FAirplaneNavigation;
@@ -90,6 +89,8 @@ namespace API.Controllers
         [HttpPost("AddFlight")]
         public async Task<IActionResult> AddFlight([FromBody] ExportFlight flight)
         {
+            var cleanDeparture = DateTime.SpecifyKind(flight.FDepartureTime, DateTimeKind.Unspecified);
+            var cleanArrival = DateTime.SpecifyKind(flight.FArrivalTime, DateTimeKind.Unspecified);
             Airline? airline = await _context.Airlines.AsNoTracking().FirstOrDefaultAsync(x => x.AlName == flight.FAirline);
             Airport? departureAirport = await _context.Airports.AsNoTracking().FirstOrDefaultAsync(x => x.ApName == flight.FDepartureAirport);
             Airport? arrivalAirport = await _context.Airports.AsNoTracking().FirstOrDefaultAsync(x => x.ApName == flight.FArrivalAirport);
@@ -108,8 +109,8 @@ namespace API.Controllers
                 x.FAirline == airline.AlId &&
                 x.FArrivalAirport == arrivalAirport.ApId &&
                 x.FDepartureAirport == departureAirport.ApId &&
-                x.FDepartureTime == flight.FDepartureTime &&
-                x.FArrivalTime == flight.FArrivalTime);
+                x.FDepartureTime == cleanDeparture &&
+                x.FArrivalTime == cleanArrival);
 
             if (duplicate)
                 return BadRequest("Рейс с такими параметрами уже существует");
@@ -120,8 +121,8 @@ namespace API.Controllers
                 FAirplane = airplane.PlId,
                 FDepartureAirport = departureAirport.ApId,
                 FArrivalAirport = arrivalAirport.ApId,
-                FDepartureTime = flight.FDepartureTime,
-                FArrivalTime = flight.FArrivalTime,
+                FDepartureTime = cleanDeparture,
+                FArrivalTime = cleanArrival,
                 FBasePrice = flight.FBasePrice,
             };
 
@@ -154,8 +155,8 @@ namespace API.Controllers
             gottenFlight.FAirplane = airplane.PlId;
             gottenFlight.FArrivalAirport = arrivalAirport.ApId;
             gottenFlight.FDepartureAirport = departureAirport.ApId;
-            gottenFlight.FDepartureTime = flight.FDepartureTime;
-            gottenFlight.FArrivalTime = flight.FArrivalTime;
+            gottenFlight.FDepartureTime = DateTime.SpecifyKind(flight.FDepartureTime, DateTimeKind.Unspecified);
+            gottenFlight.FArrivalTime = DateTime.SpecifyKind(flight.FArrivalTime, DateTimeKind.Unspecified);
             gottenFlight.FBasePrice = flight.FBasePrice;
 
             _context.Flights.Update(gottenFlight);
@@ -211,7 +212,6 @@ namespace API.Controllers
                     ClassOfService? cls = null;
                     if (!string.IsNullOrWhiteSpace(parameters.ClassOfServiceStr))
                     {
-                        // Заменяем пробел на подчёркивание для совпадения с именем enum
                         var enumStr = parameters.ClassOfServiceStr.Replace(" ", "_");
                         cls = Enum.Parse<ClassOfService>(enumStr);
                     }
@@ -223,7 +223,7 @@ namespace API.Controllers
                         ClassOfService.Первый_класс => ap.PlFirstClassSeats,
                         _ => 0
                     };
-                    return total - f.GetBookedSeats(cls.Value) >= needed;
+                    return total - f.GetBookedSeats(cls!.Value) >= needed;
                 }
 
                 return f.GetBookedSeats(ClassOfService.Эконом) < ap.PlEconomySeats

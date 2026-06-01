@@ -29,7 +29,7 @@ namespace API.Controllers
                 .Include(b => b.Tickets)
                     .ThenInclude(t => t.TPassengerNavigation)
                 .Include(b => b.Tickets)
-                    .ThenInclude(t => t.TsServices);   // many-to-many без промежуточного класса
+                    .ThenInclude(t => t.TsServices);   
 
         [HttpGet("GetBookings")]
         public async Task<IActionResult> GetBookings()
@@ -191,7 +191,6 @@ namespace API.Controllers
             if (booking.BStatus == BookingStatus.Оплачен) return BadRequest("Бронирование уже оплачено");
             if (booking.BStatus == BookingStatus.Отменен) return BadRequest("Нельзя оплатить отменённое бронирование");
 
-            // Привязываем услуги к билетам
             if (request.Services is not null)
             {
                 foreach (var svcReq in request.Services)

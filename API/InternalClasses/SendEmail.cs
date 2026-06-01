@@ -36,8 +36,8 @@ namespace API.InternalClasses
             await using var context = await contextFactory.CreateDbContextAsync();
 
             Ticket? ticket = await context.Tickets
-                .Include(t => t.TPassengerNavigation)          // исправлено: было TPassenger
-                .Include(t => t.TsServices)                     // добавлено: услуги
+                .Include(t => t.TPassengerNavigation)         
+                .Include(t => t.TsServices)                     
                 .Include(t => t.TBookingNavigation)
                     .ThenInclude(b => b.BFlightNavigation)
                         .ThenInclude(f => f.FAirlineNavigation)
@@ -75,7 +75,6 @@ namespace API.InternalClasses
                 _ => "#2196F3"
             };
 
-            // Строки доп. услуг (пусто если нет)
             string servicesHtml = "";
             if (ticket.TsServices.Count > 0)
             {

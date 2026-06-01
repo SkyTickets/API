@@ -37,11 +37,9 @@ namespace API.Controllers
         [HttpGet("FindByPassport")]
         public async Task<IActionResult> FindByPassport(string serial, string number)
         {
-            // Ищем в БД
             var passenger = await _context.Passengers
                 .FirstOrDefaultAsync(p => p.PPassportSerial == serial && p.PPassportNumber == number);
 
-            // Если не нашли, возвращаем 404, чтобы фронтенд понял, что нужно создавать нового
             if (passenger == null)
             {
                 return NotFound("Пассажир не найден");

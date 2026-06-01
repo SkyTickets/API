@@ -65,7 +65,6 @@ namespace API.Controllers
         [HttpPost("AddService")]
         public async Task<IActionResult> AddService([FromBody] TicketServiceRequest request)
         {
-            // Загружаем с трекингом и включаем уже привязанные услуги
             Ticket? ticket = await _context.Tickets
                 .Include(t => t.TsServices)
                 .FirstOrDefaultAsync(t => t.TId == request.TicketId);
