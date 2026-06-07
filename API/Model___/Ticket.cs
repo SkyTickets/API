@@ -29,7 +29,6 @@ public partial class Ticket
         var fullName = $"{TUserNavigation.USurname} {TUserNavigation.UName} {TUserNavigation.UPatronymic}";
         var latinName = Transliteration.ToLatin(fullName);
 
-        // Airline image
         string[] files = [];
         if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/airline/")))
         {

@@ -212,7 +212,13 @@ namespace API.Controllers
             _context.Bookings.Update(booking);
             await _context.SaveChangesAsync();
 
-            await Task.WhenAll(booking.Tickets.Select(t => SendEmail.SendTicketAsync(_contextFactory, t.TId)));
+            var emailTasks = booking.Tickets
+    .Select(t => SendEmail.SendTicketAsync(_contextFactory, t.TId))
+    .ToList();
+
+            emailTasks.Add(SendEmail.SendReceiptAsync(_contextFactory, booking.BId));
+
+            await Task.WhenAll(emailTasks);
 
             Booking? saved = await BookingsWithIncludes().FirstOrDefaultAsync(b => b.BId == booking.BId);
             return Ok(saved?.ToExport());

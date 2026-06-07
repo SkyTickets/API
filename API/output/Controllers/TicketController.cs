@@ -62,11 +62,9 @@ namespace API.Controllers
             return Ok(tickets.Select(t => t.ToExport()).ToList());
         }
 
-        /// <summary>Добавить дополнительную услугу к билету</summary>
         [HttpPost("AddService")]
         public async Task<IActionResult> AddService([FromBody] TicketServiceRequest request)
         {
-            // Загружаем с трекингом и включаем уже привязанные услуги
             Ticket? ticket = await _context.Tickets
                 .Include(t => t.TsServices)
                 .FirstOrDefaultAsync(t => t.TId == request.TicketId);
@@ -88,8 +86,7 @@ namespace API.Controllers
 
             return Ok();
         }
-
-        /// <summary>Удалить дополнительную услугу с билета</summary>
+        
         [HttpPost("RemoveService")]
         public async Task<IActionResult> RemoveService([FromBody] TicketServiceRequest request)
         {

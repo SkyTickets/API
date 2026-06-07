@@ -30,7 +30,6 @@ public partial class Flight
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
-    // Counts tickets of a given class across non-cancelled bookings for this flight
     public int GetBookedSeats(API.Enums.ClassOfService cls)
     {
         return Bookings

@@ -25,7 +25,6 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Регистрируем PostgreSQL enum-типы с привязкой к C#-перечислениям
         modelBuilder
             .HasPostgresEnum<BookingStatus>(schema: "skytickets", name: "booking_status")
             .HasPostgresEnum<ClassOfService>(schema: "skytickets", name: "class_of_service")
@@ -231,7 +230,6 @@ public partial class PostgresContext(DbContextOptions<PostgresContext> options) 
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("tickets_passengers_fk");
 
-            // Many-to-many через shadow-сущность (без отдельного класса TicketService)
             entity.HasMany(d => d.TsServices).WithMany(p => p.TsTickets)
                 .UsingEntity<Dictionary<string, object>>(
                     "TicketService",

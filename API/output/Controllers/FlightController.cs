@@ -42,7 +42,6 @@ namespace API.Controllers
                 .Where(f => f.FDepartureTime >= DateTime.UtcNow)
                 .ToListAsync();
 
-            // Оставляем только рейсы, у которых есть хотя бы одно свободное место
             flights = flights.Where(f =>
             {
                 var ap = f.FAirplaneNavigation;
@@ -187,7 +186,6 @@ namespace API.Controllers
 
             var flights = await query.Where(f => f.FDepartureTime >= DateTime.UtcNow).ToListAsync();
 
-            // Только рейсы с хотя бы одним свободным местом любого класса
             flights = flights.Where(f =>
             {
                 var ap = f.FAirplaneNavigation;

@@ -20,7 +20,6 @@ public partial class Ticket
 
     public virtual Passenger TPassengerNavigation { get; set; } = null!;
 
-    // Many-to-many: скаффолд генерирует прямую связь без промежуточного класса
     public virtual ICollection<AdditionalService> TsServices { get; set; } = new List<AdditionalService>();
 
     public ExportTicket ToExport()

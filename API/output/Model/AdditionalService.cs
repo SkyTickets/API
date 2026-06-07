@@ -10,7 +10,6 @@ public partial class AdditionalService
 
     public int AsPrice { get; set; }
 
-    // Обратная навигация для many-to-many через shadow-сущность ticket_services
     public virtual ICollection<Ticket> TsTickets { get; set; } = new List<Ticket>();
 
     public ExportAdditionalService ToExport()

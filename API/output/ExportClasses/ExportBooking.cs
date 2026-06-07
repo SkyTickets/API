@@ -14,7 +14,6 @@ namespace API.ExportClasses
 
         public int BTotalPrice { get; set; }
 
-        // Денормализованные поля для удобства отображения
         public string? BUserName { get; set; }
 
         public string? FAirline { get; set; }

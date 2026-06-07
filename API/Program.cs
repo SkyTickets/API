@@ -12,7 +12,6 @@ var conString = builder.Configuration.GetConnectionString("DatabaseConnection") 
 var clientAddress = builder.Configuration["Addresses:Client"] ?? throw new InvalidOperationException("Address string 'Client' not found");
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 builder.Services.AddSwaggerGen();

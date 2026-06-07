@@ -31,6 +31,152 @@ namespace API.InternalClasses
             await smtp.SendMailAsync(mailMessage);
         }
 
+        public static async Task SendReceiptAsync(IDbContextFactory<PostgresContext> contextFactory, int bookingId)
+        {
+            await using var context = await contextFactory.CreateDbContextAsync();
+
+            var booking = await context.Bookings
+                .Include(b => b.BUserNavigation)
+                .Include(b => b.Tickets).ThenInclude(t => t.TPassengerNavigation)
+                .Include(b => b.Tickets).ThenInclude(t => t.TsServices)
+                .Include(b => b.BFlightNavigation).ThenInclude(f => f.FAirlineNavigation)
+                .FirstOrDefaultAsync(b => b.BId == bookingId);
+
+            if (booking is null || booking.BUserNavigation is null) return;
+
+            var user = booking.BUserNavigation;
+            var flight = booking.BFlightNavigation;
+
+            string itemsRowsHtml = "";
+            int positionNum = 1;
+
+            foreach (var ticket in booking.Tickets)
+            {
+                string passengerName = $"{ticket.TPassengerNavigation.PSurname} {ticket.TPassengerNavigation.PName}";
+
+                itemsRowsHtml += $@"
+            <tr style=""border-bottom: 1px solid #f3f4f6;"">
+                <td style=""padding: 10px 0; font-size: 13px; color: #374151;"">{positionNum++}. Авиабилет ({ticket.TClass}) — {passengerName}</td>
+                <td style=""padding: 10px 0; font-size: 13px; color: #374151; text-align: right;"">{ticket.TPrice:N0} ₽</td>
+            </tr>";
+
+                foreach (var svc in ticket.TsServices)
+                {
+                    itemsRowsHtml += $@"
+                <tr style=""border-bottom: 1px solid #f3f4f6;"">
+                    <td style=""padding: 10px 0; font-size: 13px; color: #6b7280; padding-left: 12px;"">• Доп. услуга: {svc.AsName} ({passengerName})</td>
+                    <td style=""padding: 10px 0; font-size: 13px; color: #374151; text-align: right;"">{svc.AsPrice:N0} ₽</td>
+                </tr>";
+                }
+            }
+
+            MailAddress from = new(_email, "SkyTickets Финансы");
+            MailAddress to = new(user.UEmail);
+
+            MailMessage mailMessage = new(from, to)
+            {
+                Subject = $"SkyTickets — Кассовый чек № CHK-{booking.BId}",
+                IsBodyHtml = true,
+                Body = $@"
+<!doctype html>
+<html lang=""ru"">
+<head>
+  <meta charset=""UTF-8"" />
+  <title>Электронный чек</title>
+</head>
+<body style=""margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif;"">
+  <table width=""100%"" border=""0"" cellspacing=""0"" cellpadding=""0"" style=""background-color: #f3f4f6; padding: 30px 15px;"">
+    <tr>
+      <td align=""center"">
+        <table width=""100%"" style=""max-width: 500px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-collapse: collapse;"">
+          
+          <!-- Заголовок чека -->
+          <tr>
+            <td style=""padding: 24px; text-align: center; border-bottom: 2px dashed #e5e7eb;"">
+              <div style=""font-size: 22px; font-weight: 800; color: #1f2937; letter-spacing: 0.5px;"">SkyTickets</div>
+              <div style=""font-size: 12px; color: #6b7280; margin-top: 4px;"">ООО «СКАЙ ТИКЕТС»</div>
+              <div style=""font-size: 11px; color: #9ca3af; margin-top: 2px;"">ИНН 0274001234 · КПП 027401001</div>
+            </td>
+          </tr>
+
+          <!-- Информация о транзакции -->
+          <tr>
+            <td style=""padding: 20px 24px 10px;"">
+              <table width=""100%"" border=""0"" cellspacing=""0"" cellpadding=""0"" style=""font-size: 12px; color: #4b5563; line-height: 1.6;"">
+                <tr>
+                  <td>ЧЕК №: CHK-{booking.BId}-{DateTime.Now:yyyyMMdd}</td>
+                  <td align=""right"">ДАТА: {DateTime.Now:dd.MM.yyyy HH:mm}</td>
+                </tr>
+                <tr>
+                  <td>ТИП ОПЕРАЦИИ: ПРИХОД</td>
+                  <td align=""right"">СИСТЕМА НАЛОГООБЛОЖЕНИЯ: ОСН</td>
+                </tr>
+                <tr>
+                  <td colspan=""2"">ПОКУПАТЕЛЬ: {user.UEmail}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Список позиций -->
+          <tr>
+            <td style=""padding: 10px 24px;"">
+              <div style=""border-top: 1px solid #e5e7eb; padding-top: 10px;"">
+                <div style=""font-size: 11px; font-weight: 700; color: #9ca3af; margin-bottom: 8px;"">НАИМЕНОВАНИЕ ТОВАРОВ / УСЛУГ</div>
+                <table width=""100%"" border=""0"" cellspacing=""0"" cellpadding=""0"">
+                  {itemsRowsHtml}
+                </table>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Итоги -->
+          <tr>
+            <td style=""padding: 14px 24px 24px;"">
+              <table width=""100%"" border=""0"" cellspacing=""0"" cellpadding=""0"" style=""border-top: 2px solid #1f2937; padding-top: 14px;"">
+                <tr style=""font-size: 18px; font-weight: 700; color: #1f2937;"">
+                  <td>ИТОГ</td>
+                  <td align=""right"">{booking.BTotalPrice:N0} ₽</td>
+                </tr>
+                <tr style=""font-size: 12px; color: #6b7280; margin-top: 4px;"">
+                  <td>В том числе НДС 20%</td>
+                  <td align=""right"">{(booking.BTotalPrice * 0.20):N2} ₽</td>
+                </tr>
+                <tr style=""font-size: 12px; color: #4b5563; padding-top: 8px;"">
+                  <td>ФОРМА ОПЛАТЫ: БЕЗНАЛИЧНЫМИ</td>
+                  <td align=""right"" style=""font-weight: 600;"">{booking.BTotalPrice:N0} ₽</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Подвал чека -->
+          <tr>
+            <td style=""padding: 16px 24px; background-color: #f9fafb; text-align: center; border-radius: 0 0 8px 8px; font-size: 11px; color: #9ca3af; border-top: 1px solid #e5e7eb;"">
+              Электронный чек доступен в ЛК авиакомпании.<br>
+              Спасибо, что выбрали SkyTickets!
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"
+            };
+
+            using SmtpClient smtp = new("smtp.yandex.com", 587)
+            {
+                Credentials = new NetworkCredential(_email, _appPassword.Replace(" ", "")),
+                EnableSsl = true,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false
+            };
+
+            await smtp.SendMailAsync(mailMessage);
+        }
+
         public static async Task SendTicketAsync(IDbContextFactory<PostgresContext> contextFactory, int ticketid)
         {
             await using var context = await contextFactory.CreateDbContextAsync();
